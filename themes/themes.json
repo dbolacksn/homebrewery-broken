@@ -16,7 +16,7 @@
       "path": "5eDMG"
     },
     "5ePHB": {
-      "name": "5e PHB",
+      "name": "Modern Age",
       "renderer": "V3",
       "baseTheme": false,
       "baseSnippets": false,
@@ -35,6 +35,13 @@
       "baseTheme": false,
       "baseSnippets": "5ePHB",
       "path": "Journal"
+    },
+    "PHB": {
+      "name": "5e PHB",
+      "renderer": "V3",
+      "baseTheme": false,
+      "baseSnippets": false,
+      "path": "PHB"
     }
   }
 }

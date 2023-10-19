@@ -64,15 +64,71 @@ module.exports = [
 		]
 	},
 
+	/*********************** IMAGES *******************/
+	{
+		groupName : 'Images',
+		icon      : 'fas fa-images',
+		view      : 'text',
+		snippets  : [
+			{
+				name : 'Image',
+				icon : 'fas fa-image',
+				gen  : dedent`
+					![cat warrior](https://s-media-cache-ak0.pinimg.com/736x/4a/81/79/4a8179462cfdf39054a418efd4cb743e.jpg) {width:325px,mix-blend-mode:multiply}
+
+					{{artist,position:relative,top:-230px,left:10px,margin-bottom:-30px
+					##### Cat Warrior
+					[Kyoung Hwan Kim](https://www.artstation.com/tahra)
+					}}`
+			},
+			{
+				name : 'Background Image',
+				icon : 'fas fa-tree',
+				gen  : dedent`
+					![homebrew mug](http://i.imgur.com/hMna6G0.png) {position:absolute,top:50px,right:30px,width:280px}
+
+					{{artist,top:80px,right:30px
+					##### Homebrew Mug
+					[naturalcrit](https://homebrew.naturalcrit.com)
+					}}`
+			},
+			{
+				name : 'Watermark',
+				icon : 'fas fa-id-card',
+				gen  : dedent`
+				{{watermark Homebrewery}}\n`
+			},
+		]
+	},
 
 
 	/************************* PHB ********************/
 
 	{
-		groupName : 'Modern Age',
+		groupName : 'PHB',
 		icon      : 'fas fa-book',
 		view      : 'text',
 		snippets  : [
+			{
+				name : 'Spell',
+				icon : 'fas fa-magic',
+				gen  : MagicGen.spell,
+			},
+			{
+				name : 'Spell List',
+				icon : 'fas fa-scroll',
+				gen  : MagicGen.spellList,
+			},
+			{
+				name : 'Class Feature',
+				icon : 'fas fa-mask',
+				gen  : ClassFeatureGen,
+			},
+			{
+				name : 'Quote',
+				icon : 'fas fa-quote-right',
+				gen  : QuoteGen,
+			},
 			{
 				name : 'Note',
 				icon : 'fas fa-sticky-note',
@@ -102,6 +158,21 @@ module.exports = [
 				},
 			},
 			{
+				name : 'Monster Stat Block (unframed)',
+				icon : 'fas fa-paw',
+				gen  : MonsterBlockGen.monster('monster', 2),
+			},
+			{
+				name : 'Monster Stat Block',
+				icon : 'fas fa-spider',
+				gen  : MonsterBlockGen.monster('monster,frame', 2),
+			},
+			{
+				name : 'Wide Monster Stat Block',
+				icon : 'fas fa-dragon',
+				gen  : MonsterBlockGen.monster('monster,frame,wide', 4),
+			},
+			{
 				name         : 'Front Cover Page',
 				icon         : 'fac book-front-cover',
 				gen          : CoverPageGen.front,
@@ -125,6 +196,23 @@ module.exports = [
 				gen       		 : CoverPageGen.back,
 				experimental : true
 			},
+			{
+				name : 'Magic Item',
+				icon : 'fas fa-hat-wizard',
+				gen  : MagicGen.item,
+			},
+			{
+				name : 'Artist Credit',
+				icon : 'fas fa-signature',
+				gen  : function(){
+					return dedent`
+						{{artist,top:90px,right:30px
+						##### Starry Night
+						[Van Gogh](https://www.vangoghmuseum.nl/en)
+						}}
+						\n`;
+				},
+			}
 		]
 	},
 

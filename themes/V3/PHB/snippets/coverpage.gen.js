@@ -83,9 +83,21 @@ module.exports = {
 	front : function() {
 		return dedent`
 		  {{frontCover}}
-		  ![background image](/assets/MAGE/MAGE-Proxy-cover.png){position:absolute,bottom:0,left:0,height:100%}
-		  ![AGE Creators Alliance Logo](/assets/MAGE/AGE_CreatorsAlliance_logo.png){position:absolute,bottom:0,left:0,height:1.22in}
-		  ![Modern Age Compatible Logo](/assets/MAGE/ModernAGE_compatability_logo.png){position:absolute,bottom:0,right:0,height:1.15in}
+
+		  {{logo ![](/assets/naturalCritLogoRed.svg)}}
+
+		  # ${_.sample(titles)}
+		  ## ${_.sample(subtitles)}
+		  ___
+
+		  {{banner HOMEBREW}}
+
+		  {{footnote
+		    ${_.sample(footnote)}
+		  }}
+
+		  ![background image](https://i.imgur.com/IwHRrbF.jpg){position:absolute,bottom:0,left:0,height:100%}
+
 		  \page`;
 	},
 
@@ -93,24 +105,18 @@ module.exports = {
 		return dedent`
 			{{insideCover}}
 
-			{{titlePageTitle}}
 			# ${_.sample(titles)}
-			
-			{{credits
-			## **Lead Design and Development:** Text: Credits Large
-			### **Writing and Design: Text:** Credits Small
-			### **Adventure Game Engine (AGE) Created by** Chris Pramas
+			## ${_.sample(subtitles)}
+			___
+
+			{{imageMaskCenter${_.random(1, 16)},--offsetX:0%,--offsetY:0%,--rotation:0
+			  ![background image](https://i.imgur.com/IsfUnFR.jpg){position:absolute,bottom:0,left:0,height:100%}
 			}}
 
-			{{credits-copyright
-			#### Modern AGE is © 2018-2021 Green Ronin Publishing, LLC. All rights reserved. Reference to other copyrighted material in no way constitutes a challenge to the respective copyright holders of that material. Modern AGE, Green Ronin, Adventure Game Engine, and their associated logos are trademarks of Green Ronin Publishing.
-			##### All other original material in this work is copyright [year] by [your legal name or company name] and published under the Community Content Agreement for Modern AGE XXXXXXXXXX.
-			}}
+			{{logo ![](/assets/naturalCritLogoRed.svg)}}
 
-			![AGE Creators Alliance Logo](/assets/MAGE/AGE_CreatorsAlliance_logo.png){ageCALogo}
-			![Modern Age Compatible Logo](/assets/MAGE/ModernAGE_compatability_logo.png){mageCompatLogo}
 			\page`;
-	  },
+	},
 
 	part : function() {
 		return dedent`
