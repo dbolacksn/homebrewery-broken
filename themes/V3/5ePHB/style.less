@@ -3,15 +3,16 @@
 
 :root {
 	//Colors
-	--HB_Color_Background: #EEE5CE; // Light parchment
 	--HB_Color_Accent: #E0E5C1; // Pastel green
 	--HB_Color_HeaderUnderline: #C0AD6A; // Gold
 	--HB_Color_HorizontalRule: #9C2B1B; // Maroon
-	--HB_Color_HeaderText: #000000; // Black
 	--HB_Color_MonsterStatBackground: #F2E5B5; // Light orange parchment
 	--HB_Color_CaptionText: #766649; // Brown
 	--HB_Color_WatercolorStain: #BBAD82; // Light brown
 	--HB_Color_Footnotes: #C9AD6A; // Gold
+// MAGE or MAGE modified
+	--HB_Color_Background: #ffffff; // Bright White
+	--HB_Color_HeaderText: #000000; // Black
 	--HB_Color_MAGE: #187186; // Dark Teal
 	--HB_Color_MAGE_Gritty_Mode: #D89B83; // Gritty Background color
 	--HB_Color_MAGE_Pulpy_Mode: #FDE9BD; // Pulpy Background color
@@ -86,9 +87,9 @@ body {
 	position: relative;
 	z-index: 15;
 	box-sizing: border-box;
-	width: 215.9mm;
-	height: 279.4mm;
-	padding: 1.4cm 1.9cm 1.7cm;
+	width: 8.38in;
+	height: 10.88in;
+	padding: .4in .5in .9in .5in;
 	overflow: hidden;
 	font-family: "BookAntiqua";
 	font-size: 9pt;
@@ -981,20 +982,15 @@ body {
 	}
 
 	h1 {
-		margin-top: 1.2cm;
-		margin-bottom: 0;
-		font-family: "EternalKnight";
-		font-size: 2.1cm;
-		font-weight: normal;
-		line-height: 0.85em;
+		font-weight: 108%;
+		margin-top: 1em;
+		font-size: 48pt;
+		font-weight: bold;
 		text-transform: uppercase;
 	}
 
-	h2::before {
-		height: 15%;
-	}
-
 	h2 {
+		margin-top: 1em;
 		font-family: "EternalKnight";
 		font-size: 18pt;
 		text-align: left;
@@ -1007,57 +1003,37 @@ body {
 		border-bottom: 0px;
 	}
 
-	h4::pre {}
-
-	h4 {
-		font-family: "BookAntiqua";
-		font-size: 9pt;
-		text-align: center;
-		border-bottom: 0px;
-		font-style: italic;
-	}
-
-	h5 {
-		font-family: "BookAntiqua";
-		font-size: 9pt;
-		text-align: center;
-		border-bottom: 0px;
-	}
-
-	hr {
-		position: relative;
-		display: block;
-		width: 12cm;
-		height: 0.5cm;
-		margin: auto;
-		visibility: visible;
-		background-image: @horizontalRule;
-		background-size: 100% 100%;
-		border: none;
-	}
-
 	strong {
 		color: var(--HB_Color_MAGE) !important;
 	}
 
 	.credits {
 		position: absolute;
-		top: 35%;
 		left: .5in;
 		width: calc(100% - 1in);
 	}
 
-	.credits-copyright {
+	.credits-copyright-gr {
 		position: absolute;
 		bottom: 25%;
-		left: .5in;
-		width: calc(100% - 1in);
+		left: .925in;
+		width: calc(100% - 1.85in);
+		font-family: "Book Antiqua" !important;
+		font-weight: normal !important;
+		font-size: 9pt;
+	}
+
+	.credits-copyright-CA-Member {
+		width: calc(100% - .9in);
+		font-family: "Book Antiqua" !important;
+		font-weight: normal !important;
+		font-size: 9pt;
 	}
 
 	.ageCALogo {
 		position: absolute;
 		bottom: 0;
-		left: 0.5in;
+		left: .5in;
 		height: 1.22in
 	}
 
