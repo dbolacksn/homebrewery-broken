@@ -105,18 +105,21 @@ module.exports = {
 		}}
 		
 		{{credits-copyright-gr
-		#### Modern AGE is © 2018-2021 Green Ronin Publishing, LLC. All rights reserved. Reference to other copyrighted material in no way constitutes a challenge to the respective copyright holders of that material. 
-		#### Modern AGE, Green Ronin, Adventure Game Engine, and their associated logos are trademarks of Green Ronin Publishing.
+		*Modern AGE is © 2018-2021 Green Ronin Publishing, LLC. All rights reserved. Reference to other copyrighted material in no way constitutes a challenge to the respective copyright holders of that material.*
+		
+		*Modern AGE, Green Ronin, Adventure Game Engine, and their associated logos are trademarks of Green Ronin Publishing.*
 		:
 		:
 		:
 		{{credits-copyright-CA-Member
-		##### All other original material in this work is copyright [year] by [your legal name or company name] and published under the Community Content Agreement for Modern AGE XXXXXXXXXX.
+		All other original material in this work is copyright [year] by [your legal name or company name] and published under the Community Content Agreement for Modern AGE XXXXXXXXXX.
 		}}
 		}}
 		
+		{{TitlePageBlackBox
 		![AGE Creators Alliance Logo](/assets/MAGE/AGE_CreatorsAlliance_logo.png){ageCALogo}
 		![Modern Age Compatible Logo](/assets/MAGE/ModernAGE_compatability_logo.png){mageCompatLogo}
+		}}
 		\page
 		`;
 	},
