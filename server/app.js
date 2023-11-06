@@ -10,6 +10,7 @@ const app = express();
 const config = require('./config.js');
 
 const { homebrewApi, getBrew } = require('./homebrew.api.js');
+const { favoritesApi, getFavorites } = require('./favorites.api.js');
 const GoogleActions = require('./googleActions.js');
 const serveCompressedStaticAssets = require('./static-assets.mv.js');
 const sanitizeFilename = require('sanitize-filename');
