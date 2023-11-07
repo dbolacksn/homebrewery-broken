@@ -63,6 +63,9 @@
         "branches": 50,
         "functions": 60,
         "lines": 70
+      },
+      "server/favorites.api.js": {
+        
       }
     },
     "setupFilesAfterEnv": [
