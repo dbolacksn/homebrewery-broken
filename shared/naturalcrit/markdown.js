@@ -28,6 +28,24 @@ renderer.paragraph = function(text){
 		return `<p>${text}</p>\n`;
 };
 
+renderer.image = function(href, title, text){
+	console.log(`IMAGE`);
+	href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
+	if(href === null) {
+		return text;
+	}
+
+	let out = `<img src="${escape(href)}" loading=lazy`;
+	if(text) {
+		out += ` alt=${text}`;
+	}
+	if(title) {
+		out += ` title="${title}"`;
+	}
+	out += `>`;
+	return out;
+};
+
 const mustacheSpans = {
 	name  : 'mustacheSpans',
 	level : 'inline',                                   // Is this a block-level or inline-level tokenizer?
