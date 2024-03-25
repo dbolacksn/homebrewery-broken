@@ -3,16 +3,25 @@ const dedent = require('dedent-tabs').default;
 
 const getTOC = (pages)=>{
 
-	const recursiveAdd = (title, page, targetDepth, curDepth=0)=>{
+	const recursiveAdd = (title, page, targetDepth, child, curDepth=0)=>{
+		console.log(curDepth);
+		if(curDepth > 5) return; // Something went wrong.
 		if(curDepth == targetDepth) {
-			res.push({
+			child.push({
 				title    : title,
 				page     : page + 1,
 				children : []
 			});
 		} else {
-			if(!_last(res)) recursiveAdd(null, page);
-			recursiveAdd(title, page, targetDepth, curDepth+1);
+			console.log(typeof child);
+			child.push({
+				title    : null,
+				page     : page + 1,
+				children : []
+			});
+			console.log(_.last(child));
+			console.log(_.last(child).children);
+			recursiveAdd(title, page, targetDepth, _.last(child).children, curDepth+1,);
 		}
 	};
 
@@ -24,23 +33,27 @@ const getTOC = (pages)=>{
 			_.each(lines, (line)=>{
 				if(_.startsWith(line, '# ')){
 					const title = line.replace('# ', '');
-					recursiveAdd(title, pageNum, 0);
+					recursiveAdd(title, pageNum, 0, res);
 				}
 				if(_.startsWith(line, '## ')){
 					const title = line.replace('## ', '');
-					recursiveAdd(title, pageNum, 1);
+					recursiveAdd(title, pageNum, 1, res);
 				}
 				if(_.startsWith(line, '### ')){
 					const title = line.replace('### ', '');
-					recursiveAdd(title, pageNum, 2);
+					recursiveAdd(title, pageNum, 2, res);
 				}
 				if(_.startsWith(line, '#### ')){
 					const title = line.replace('#### ', '');
-					recursiveAdd(title, pageNum, 3);
+					recursiveAdd(title, pageNum, 3, res);
 				}
 				if(_.startsWith(line, '##### ')){
 					const title = line.replace('##### ', '');
-					recursiveAdd(title, pageNum, 4);
+					recursiveAdd(title, pageNum, 4, res);
+				}
+				if(_.startsWith(line, '##### ')){
+					const title = line.replace('##### ', '');
+					recursiveAdd(title, pageNum, 5, res);
 				}
 			});
 		}
