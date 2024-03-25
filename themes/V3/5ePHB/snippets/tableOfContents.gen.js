@@ -77,7 +77,7 @@ const tableOfContents = (props, maxDepth)=>{
 
 	return dedent`
 		{{toc,wide
-		# Table Of Contents
+		# Contents
 
 		${markdown}
 		}}
