@@ -2,12 +2,12 @@
 require('./newPage.less');
 const React = require('react');
 const createClass = require('create-react-class');
-const _ = require('lodash');
 const request = require('../../utils/request-middleware.js');
 
 const Markdown = require('naturalcrit/markdown.js');
 
 const Nav = require('naturalcrit/nav/nav.jsx');
+const PrintNavItem = require('../../navbar/print.navitem.jsx');
 const Navbar = require('../../navbar/navbar.jsx');
 const AccountNavItem = require('../../navbar/account.navitem.jsx');
 const ErrorNavItem = require('../../navbar/error-navitem.jsx');
@@ -19,6 +19,7 @@ const Editor = require('../../editor/editor.jsx');
 const BrewRenderer = require('../../brewRenderer/brewRenderer.jsx');
 
 const { DEFAULT_BREW } = require('../../../../server/brewDefaults.js');
+const { printCurrentBrew } = require('../../../../shared/helpers.js');
 
 const BREWKEY  = 'homebrewery-new';
 const STYLEKEY = 'homebrewery-new-style';
@@ -38,13 +39,16 @@ const NewPage = createClass({
 		const brew = this.props.brew;
 
 		return {
-			brew       : brew,
-			isSaving   : false,
-			saveGoogle : (global.account && global.account.googleId ? true : false),
-			error      : null,
-			htmlErrors : Markdown.validate(brew.text)
+			brew              : brew,
+			isSaving          : false,
+			saveGoogle        : (global.account && global.account.googleId ? true : false),
+			error             : null,
+			htmlErrors        : Markdown.validate(brew.text),
+			currentEditorPage : 0
 		};
 	},
+
+	editor : React.createRef(null),
 
 	componentDidMount : function() {
 		document.addEventListener('keydown', this.handleControlKeys);
@@ -87,7 +91,7 @@ const NewPage = createClass({
 		const S_KEY = 83;
 		const P_KEY = 80;
 		if(e.keyCode == S_KEY) this.save();
-		if(e.keyCode == P_KEY) this.print();
+		if(e.keyCode == P_KEY) printCurrentBrew();
 		if(e.keyCode == P_KEY || e.keyCode == S_KEY){
 			e.stopPropagation();
 			e.preventDefault();
@@ -95,7 +99,7 @@ const NewPage = createClass({
 	},
 
 	handleSplitMove : function(){
-		this.refs.editor.update();
+		this.editor.current.update();
 	},
 
 	handleTextChange : function(text){
@@ -104,8 +108,9 @@ const NewPage = createClass({
 		if(htmlErrors.length) htmlErrors = Markdown.validate(text);
 
 		this.setState((prevState)=>({
-			brew       : { ...prevState.brew, text: text },
-			htmlErrors : htmlErrors
+			brew              : { ...prevState.brew, text: text },
+			htmlErrors        : htmlErrors,
+			currentEditorPage : this.editor.current.getCurrentPage() - 1 //Offset index since Marked starts pages at 0
 		}));
 		localStorage.setItem(BREWKEY, text);
 	},
@@ -177,16 +182,6 @@ const NewPage = createClass({
 		}
 	},
 
-	print : function(){
-		window.open('/print?dialog=true&local=print', '_blank');
-	},
-
-	renderLocalPrintButton : function(){
-		return <Nav.item color='purple' icon='far fa-file-pdf' onClick={this.print}>
-			get PDF
-		</Nav.item>;
-	},
-
 	renderNavbar : function(){
 		return <Navbar>
 
@@ -199,7 +194,7 @@ const NewPage = createClass({
 					<ErrorNavItem error={this.state.error} parent={this}></ErrorNavItem> :
 					this.renderSaveButton()
 				}
-				{this.renderLocalPrintButton()}
+				<PrintNavItem />
 				<HelpNavItem />
 				<RecentNavItem />
 				<AccountNavItem />
@@ -211,16 +206,25 @@ const NewPage = createClass({
 		return <div className='newPage sitePage'>
 			{this.renderNavbar()}
 			<div className='content'>
-				<SplitPane onDragFinish={this.handleSplitMove} ref='pane'>
+				<SplitPane onDragFinish={this.handleSplitMove}>
 					<Editor
-						ref='editor'
+						ref={this.editor}
 						brew={this.state.brew}
 						onTextChange={this.handleTextChange}
 						onStyleChange={this.handleStyleChange}
 						onMetaChange={this.handleMetaChange}
 						renderer={this.state.brew.renderer}
 					/>
-					<BrewRenderer text={this.state.brew.text} style={this.state.brew.style} renderer={this.state.brew.renderer} theme={this.state.brew.theme} lang={this.state.brew.lang} errors={this.state.htmlErrors}/>
+					<BrewRenderer
+						text={this.state.brew.text}
+						style={this.state.brew.style}
+						renderer={this.state.brew.renderer}
+						theme={this.state.brew.theme}
+						errors={this.state.htmlErrors}
+						lang={this.state.brew.lang}
+						currentEditorPage={this.state.currentEditorPage}
+						allowPrint={true}
+					/>
 				</SplitPane>
 			</div>
 		</div>;

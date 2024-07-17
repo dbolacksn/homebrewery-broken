@@ -3,11 +3,11 @@ require('./codeEditor.less');
 const React = require('react');
 const createClass = require('create-react-class');
 const _ = require('lodash');
-const cx = require('classnames');
 const closeTag = require('./close-tag');
+const autoCompleteEmoji = require('./autocompleteEmoji');
 
 let CodeMirror;
-if(typeof navigator !== 'undefined'){
+if(typeof window !== 'undefined'){
 	CodeMirror = require('codemirror');
 
 	//Language Modes
@@ -36,6 +36,8 @@ if(typeof navigator !== 'undefined'){
 	//XML code folding is a requirement of the auto-closing tag feature and is not enabled
 	require('codemirror/addon/fold/xml-fold.js');
 	require('codemirror/addon/edit/closetag.js');
+	//Autocompletion
+	require('codemirror/addon/hint/show-hint.js');
 
 	const foldCode = require('./fold-code');
 	foldCode.registerHomebreweryHelper(CodeMirror);
@@ -59,6 +61,8 @@ const CodeEditor = createClass({
 			docs : {}
 		};
 	},
+
+	editor : React.createRef(null),
 
 	componentDidMount : function() {
 		this.buildEditor();
@@ -99,7 +103,7 @@ const CodeEditor = createClass({
 	},
 
 	buildEditor : function() {
-		this.codeMirror = CodeMirror(this.refs.editor, {
+		this.codeMirror = CodeMirror(this.editor.current, {
 			lineNumbers       : true,
 			lineWrapping      : this.props.wrap,
 			indentWithTabs    : false,
@@ -112,6 +116,10 @@ const CodeEditor = createClass({
 				'Shift-Tab'        : this.dedent,
 				'Ctrl-B'           : this.makeBold,
 				'Cmd-B'            : this.makeBold,
+				'Shift-Ctrl-='     : this.makeSuper,
+				'Shift-Cmd-='      : this.makeSuper,
+				'Ctrl-='           : this.makeSub,
+				'Cmd-='            : this.makeSub,
 				'Ctrl-I'           : this.makeItalic,
 				'Cmd-I'            : this.makeItalic,
 				'Ctrl-U'           : this.makeUnderline,
@@ -173,7 +181,10 @@ const CodeEditor = createClass({
 			// 	return el;
 			// }
 		});
+
+		// Add custom behaviors (auto-close curlies and auto-complete emojis)
 		closeTag.autoCloseCurlyBraces(CodeMirror, this.codeMirror);
+		autoCompleteEmoji.showAutocompleteEmoji(CodeMirror, this.codeMirror);
 
 		// Note: codeMirror passes a copy of itself in this callback. cm === this.codeMirror. Either one works.
 		this.codeMirror.on('change', (cm)=>{this.props.onChange(cm.getValue());});
@@ -218,6 +229,25 @@ const CodeEditor = createClass({
 			this.codeMirror.setCursor({ line: cursor.line, ch: cursor.ch - 1 });
 		}
 	},
+
+	makeSuper : function() {
+		const selection = this.codeMirror.getSelection(), t = selection.slice(0, 1) === '^' && selection.slice(-1) === '^';
+		this.codeMirror.replaceSelection(t ? selection.slice(1, -1) : `^${selection}^`, 'around');
+		if(selection.length === 0){
+			const cursor = this.codeMirror.getCursor();
+			this.codeMirror.setCursor({ line: cursor.line, ch: cursor.ch - 1 });
+		}
+	},
+
+	makeSub : function() {
+		const selection = this.codeMirror.getSelection(), t = selection.slice(0, 2) === '^^' && selection.slice(-2) === '^^';
+		this.codeMirror.replaceSelection(t ? selection.slice(2, -2) : `^^${selection}^^`, 'around');
+		if(selection.length === 0){
+			const cursor = this.codeMirror.getCursor();
+			this.codeMirror.setCursor({ line: cursor.line, ch: cursor.ch - 2 });
+		}
+	},
+
 
 	makeNbsp : function() {
 		this.codeMirror.replaceSelection('&nbsp;', 'end');
@@ -413,8 +443,8 @@ const CodeEditor = createClass({
 
 	render : function(){
 		return <>
-			<link href={`../homebrew/cm-themes/${this.props.editorTheme}.css`} rel='stylesheet' />
-			<div className='codeEditor' ref='editor' style={this.props.style}/>
+			<link href={`../homebrew/cm-themes/${this.props.editorTheme}.css`} type='text/css' rel='stylesheet' />
+			<div className='codeEditor' ref={this.editor} style={this.props.style}/>
 		</>;
 	}
 });
