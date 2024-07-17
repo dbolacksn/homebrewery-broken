@@ -251,7 +251,7 @@ module.exports = [
 			},
 
 			{
-				name : 'ORC License',
+				name : 'ORC Notice',
 				icon : 'fas fa-Paizo',
 				gen	 : LicenseGenORC.orc1,
 			},
