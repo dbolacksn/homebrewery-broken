@@ -1,9 +1,10 @@
 /* eslint-disable max-lines */
 require('./editPage.less');
 const React = require('react');
-const createClass = require('create-react-class');
 const _ = require('lodash');
-const request = require('../../utils/request-middleware.js');
+const createClass = require('create-react-class');
+
+import request from '../../utils/request-middleware.js';
 const { Meta } = require('vitreum/headtags');
 
 const Nav = require('naturalcrit/nav/nav.jsx');
@@ -11,7 +12,7 @@ const Navbar = require('../../navbar/navbar.jsx');
 
 const NewBrew = require('../../navbar/newbrew.navitem.jsx');
 const HelpNavItem = require('../../navbar/help.navitem.jsx');
-const PrintLink = require('../../navbar/print.navitem.jsx');
+const PrintNavItem = require('../../navbar/print.navitem.jsx');
 const ErrorNavItem = require('../../navbar/error-navitem.jsx');
 const Account = require('../../navbar/account.navitem.jsx');
 const RecentNavItem = require('../../navbar/recent.navitem.jsx').both;
@@ -20,13 +21,18 @@ const SplitPane = require('naturalcrit/splitPane/splitPane.jsx');
 const Editor = require('../../editor/editor.jsx');
 const BrewRenderer = require('../../brewRenderer/brewRenderer.jsx');
 
-const Markdown = require('naturalcrit/markdown.js');
+const LockNotification = require('./lockNotification/lockNotification.jsx');
+
+import Markdown from 'naturalcrit/markdown.js';
 
 const { DEFAULT_BREW_LOAD } = require('../../../../server/brewDefaults.js');
+const { printCurrentBrew, fetchThemeBundle } = require('../../../../shared/helpers.js');
+
+import { updateHistory, versionHistoryGarbageCollection } from '../../utils/versionHistory.js';
 
 const googleDriveIcon = require('../../googleDrive.svg');
 
-const SAVE_TIMEOUT = 3000;
+const SAVE_TIMEOUT = 10000;
 
 const EditPage = createClass({
 	displayName     : 'EditPage',
@@ -38,22 +44,28 @@ const EditPage = createClass({
 
 	getInitialState : function() {
 		return {
-			brew                   : this.props.brew,
-			isSaving               : false,
-			isPending              : false,
-			alertTrashedGoogleBrew : this.props.brew.trashed,
-			alertLoginToTransfer   : false,
-			saveGoogle             : this.props.brew.googleId ? true : false,
-			confirmGoogleTransfer  : false,
-			error                  : null,
-			htmlErrors             : Markdown.validate(this.props.brew.text),
-			url                    : '',
-			autoSave               : true,
-			autoSaveWarning        : false,
-			unsavedTime            : new Date(),
-			currentEditorPage      : 0
+			brew                       : this.props.brew,
+			isSaving                   : false,
+			isPending                  : false,
+			alertTrashedGoogleBrew     : this.props.brew.trashed,
+			alertLoginToTransfer       : false,
+			saveGoogle                 : this.props.brew.googleId ? true : false,
+			confirmGoogleTransfer      : false,
+			error                      : null,
+			htmlErrors                 : Markdown.validate(this.props.brew.text),
+			url                        : '',
+			autoSave                   : true,
+			autoSaveWarning            : false,
+			unsavedTime                : new Date(),
+			currentEditorViewPageNum   : 1,
+			currentEditorCursorPageNum : 1,
+			currentBrewRendererPageNum : 1,
+			displayLockMessage         : this.props.brew.lock || false,
+			themeBundle                : {}
 		};
 	},
+
+	editor    : React.createRef(null),
 	savedBrew : null,
 
 	componentDidMount : function(){
@@ -81,6 +93,8 @@ const EditPage = createClass({
 			htmlErrors : Markdown.validate(prevState.brew.text)
 		}));
 
+		fetchThemeBundle(this, this.props.brew.renderer, this.props.brew.theme);
+
 		document.addEventListener('keydown', this.handleControlKeys);
 	},
 	componentWillUnmount : function() {
@@ -93,7 +107,7 @@ const EditPage = createClass({
 		const S_KEY = 83;
 		const P_KEY = 80;
 		if(e.keyCode == S_KEY) this.trySave(true);
-		if(e.keyCode == P_KEY) window.open(`/print/${this.processShareId()}?dialog=true`, '_blank').focus();
+		if(e.keyCode == P_KEY) printCurrentBrew();
 		if(e.keyCode == P_KEY || e.keyCode == S_KEY){
 			e.stopPropagation();
 			e.preventDefault();
@@ -101,7 +115,19 @@ const EditPage = createClass({
 	},
 
 	handleSplitMove : function(){
-		this.refs.editor.update();
+		this.editor.current.update();
+	},
+
+	handleEditorViewPageChange : function(pageNumber){
+		this.setState({ currentEditorViewPageNum: pageNumber });
+	},
+
+	handleEditorCursorPageChange : function(pageNumber){
+		this.setState({ currentEditorCursorPageNum: pageNumber });
+	},
+
+	handleBrewRendererPageChange : function(pageNumber){
+		this.setState({ currentBrewRendererPageNum: pageNumber });
 	},
 
 	handleTextChange : function(text){
@@ -110,10 +136,9 @@ const EditPage = createClass({
 		if(htmlErrors.length) htmlErrors = Markdown.validate(text);
 
 		this.setState((prevState)=>({
-			brew              : { ...prevState.brew, text: text },
-			isPending         : true,
-			htmlErrors        : htmlErrors,
-			currentEditorPage : this.refs.editor.getCurrentPage() - 1 //Offset index since Marked starts pages at 0
+			brew       : { ...prevState.brew, text: text },
+			isPending  : true,
+			htmlErrors : htmlErrors,
 		}), ()=>{if(this.state.autoSave) this.trySave();});
 	},
 
@@ -124,7 +149,10 @@ const EditPage = createClass({
 		}), ()=>{if(this.state.autoSave) this.trySave();});
 	},
 
-	handleMetaChange : function(metadata){
+	handleMetaChange : function(metadata, field=undefined){
+		if(field == 'theme' || field == 'renderer')	// Fetch theme bundle only if theme or renderer was changed
+			fetchThemeBundle(this, metadata.renderer, metadata.theme);
+
 		this.setState((prevState)=>({
 			brew : {
 				...prevState.brew,
@@ -132,11 +160,20 @@ const EditPage = createClass({
 			},
 			isPending : true,
 		}), ()=>{if(this.state.autoSave) this.trySave();});
-
 	},
 
 	hasChanges : function(){
 		return !_.isEqual(this.state.brew, this.savedBrew);
+	},
+
+	updateBrew : function(newData){
+		this.setState((prevState)=>({
+			brew : {
+				...prevState.brew,
+				style : newData.style,
+				text  : newData.text
+			}
+		}));
 	},
 
 	trySave : function(immediate=false){
@@ -190,6 +227,9 @@ const EditPage = createClass({
 			error      : null,
 			htmlErrors : Markdown.validate(prevState.brew.text)
 		}));
+
+		await updateHistory(this.state.brew).catch(console.error);
+		await versionHistoryGarbageCollection().catch(console.error);
 
 		const transfer = this.state.saveGoogle == _.isNil(this.state.brew.googleId);
 
@@ -376,7 +416,7 @@ const EditPage = createClass({
 						post to reddit
 					</Nav.item>
 				</Nav.dropdown>
-				<PrintLink shareId={this.processShareId()} />
+				<PrintNavItem />
 				<RecentNavItem brew={this.state.brew} storageKey='edit' />
 				<Account />
 			</Nav.section>
@@ -389,27 +429,41 @@ const EditPage = createClass({
 			<Meta name='robots' content='noindex, nofollow' />
 			{this.renderNavbar()}
 
-			<div className='content'>
-				<SplitPane onDragFinish={this.handleSplitMove} ref='pane'>
-					<Editor
-						ref='editor'
-						brew={this.state.brew}
-						onTextChange={this.handleTextChange}
-						onStyleChange={this.handleStyleChange}
-						onMetaChange={this.handleMetaChange}
-						reportError={this.errorReported}
-						renderer={this.state.brew.renderer}
-					/>
-					<BrewRenderer
-						text={this.state.brew.text}
-						style={this.state.brew.style}
-						renderer={this.state.brew.renderer}
-						theme={this.state.brew.theme}
-						errors={this.state.htmlErrors}
-						lang={this.state.brew.lang}
-						currentEditorPage={this.state.currentEditorPage}
-					/>
-				</SplitPane>
+			{this.props.brew.lock && <LockNotification shareId={this.props.brew.shareId} message={this.props.brew.lock.editMessage} />}
+			<div className="content">
+			<SplitPane onDragFinish={this.handleSplitMove}>
+				<Editor
+					ref={this.editor}
+					brew={this.state.brew}
+					onTextChange={this.handleTextChange}
+					onStyleChange={this.handleStyleChange}
+					onMetaChange={this.handleMetaChange}
+					reportError={this.errorReported}
+					renderer={this.state.brew.renderer}
+					userThemes={this.props.userThemes}
+					snippetBundle={this.state.themeBundle.snippets}
+					updateBrew={this.updateBrew}
+					onCursorPageChange={this.handleEditorCursorPageChange}
+					onViewPageChange={this.handleEditorViewPageChange}
+					currentEditorViewPageNum={this.state.currentEditorViewPageNum}
+					currentEditorCursorPageNum={this.state.currentEditorCursorPageNum}
+					currentBrewRendererPageNum={this.state.currentBrewRendererPageNum}
+				/>
+				<BrewRenderer
+					text={this.state.brew.text}
+					style={this.state.brew.style}
+					renderer={this.state.brew.renderer}
+					theme={this.state.brew.theme}
+					themeBundle={this.state.themeBundle}
+					errors={this.state.htmlErrors}
+					lang={this.state.brew.lang}
+					onPageChange={this.handleBrewRendererPageChange}
+					currentEditorViewPageNum={this.state.currentEditorViewPageNum}
+					currentEditorCursorPageNum={this.state.currentEditorCursorPageNum}
+					currentBrewRendererPageNum={this.state.currentBrewRendererPageNum}
+					allowPrint={true}
+				/>
+			</SplitPane>
 			</div>
 		</div>;
 	}

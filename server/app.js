@@ -1,24 +1,41 @@
 /*eslint max-lines: ["warn", {"max": 500, "skipBlankLines": true, "skipComments": true}]*/
 // Set working directory to project root
+import { dirname }       from 'path';
+import { fileURLToPath } from 'url';
+import packageJSON       from './../package.json' with { type: "json" };
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 process.chdir(`${__dirname}/..`);
+const version = packageJSON.version;
 
-const _ = require('lodash');
-const jwt = require('jwt-simple');
-const express = require('express');
-const yaml = require('js-yaml');
-const cors = require('cors');
+import _       from 'lodash';
+import jwt     from 'jwt-simple';
+import express from 'express';
+import yaml    from 'js-yaml';
+import config  from './config.js';
+import fs      from 'fs-extra';
+
 const app = express();
-const config = require('./config.js');
 
-const { homebrewApi, getBrew } = require('./homebrew.api.js');
-const GoogleActions = require('./googleActions.js');
-const serveCompressedStaticAssets = require('./static-assets.mv.js');
-const sanitizeFilename = require('sanitize-filename');
-const asyncHandler = require('express-async-handler');
+import api from './homebrew.api.js';
+const { homebrewApi, getBrew, getUsersBrewThemes, getCSS } = api;
+import adminApi                    from './admin.api.js';
+import vaultApi                    from './vault.api.js';
+import GoogleActions               from './googleActions.js';
+import serveCompressedStaticAssets from './static-assets.mv.js';
+import sanitizeFilename            from 'sanitize-filename';
+import asyncHandler                from 'express-async-handler';
+import templateFn                  from '../client/template.js';
+import {model as HomebrewModel }   from './homebrew.model.js';
 
-const { DEFAULT_BREW } = require('./brewDefaults.js');
+import { DEFAULT_BREW }              from './brewDefaults.js';
+import { splitTextStyleAndMetadata } from '../shared/helpers.js';
 
-const { splitTextStyleAndMetadata } = require('../shared/helpers.js');
+//==== Middleware Imports ====//
+import contentNegotiation from './middleware/content-negotiation.js';
+import bodyParser         from 'body-parser';
+import cookieParser       from 'cookie-parser';
+import forceSSL           from './forcessl.mw.js';
 
 
 const sanitizeBrew = (brew, accessType)=>{
@@ -26,19 +43,17 @@ const sanitizeBrew = (brew, accessType)=>{
 	brew.__v = undefined;
 	if(accessType !== 'edit' && accessType !== 'shareAuthor') {
 		brew.editId = undefined;
-	}	
+	}
 	return brew;
 };
 
-app.use(cors({
-	origin : '*',
-}));
+app.set('trust proxy', 1 /* number of proxies between user and server */)
 
 app.use('/', serveCompressedStaticAssets(`build`));
-app.use(require('./middleware/content-negotiation.js'));
-app.use(require('body-parser').json({ limit: '25mb' }));
-app.use(require('cookie-parser')());
-app.use(require('./forcessl.mw.js'));
+app.use(contentNegotiation);
+app.use(bodyParser.json({ limit: '25mb' }));
+app.use(cookieParser());
+app.use(forceSSL);
 
 //Account Middleware
 app.use((req, res, next)=>{
@@ -58,14 +73,14 @@ app.use((req, res, next)=>{
 });
 
 app.use(homebrewApi);
-app.use(require('./admin.api.js'));
+app.use(adminApi);
+app.use(vaultApi);
 
-const HomebrewModel     = require('./homebrew.model.js').model;
-const welcomeText       = require('fs').readFileSync('client/homebrew/pages/homePage/welcome_msg.md', 'utf8');
-const welcomeTextLegacy = require('fs').readFileSync('client/homebrew/pages/homePage/welcome_msg_legacy.md', 'utf8');
-const migrateText       = require('fs').readFileSync('client/homebrew/pages/homePage/migrate.md', 'utf8');
-const changelogText     = require('fs').readFileSync('changelog.md', 'utf8');
-const faqText           = require('fs').readFileSync('faq.md', 'utf8');
+const welcomeText       = fs.readFileSync('client/homebrew/pages/homePage/welcome_msg.md', 'utf8');
+const welcomeTextLegacy = fs.readFileSync('client/homebrew/pages/homePage/welcome_msg_legacy.md', 'utf8');
+const migrateText       = fs.readFileSync('client/homebrew/pages/homePage/migrate.md', 'utf8');
+const changelogText     = fs.readFileSync('changelog.md', 'utf8');
+const faqText           = fs.readFileSync('faq.md', 'utf8');
 
 String.prototype.replaceAll = function(s, r){return this.split(s).join(r);};
 
@@ -86,7 +101,8 @@ app.get('/robots.txt', (req, res)=>{
 app.get('/', (req, res, next)=>{
 	req.brew = {
 		text     : welcomeText,
-		renderer : 'V3'
+		renderer : 'V3',
+		theme    : '5ePHB'
 	},
 
 	req.ogMeta = { ...defaultMetaTags,
@@ -102,7 +118,8 @@ app.get('/', (req, res, next)=>{
 app.get('/legacy', (req, res, next)=>{
 	req.brew = {
 		text     : welcomeTextLegacy,
-		renderer : 'legacy'
+		renderer : 'legacy',
+		theme    : '5ePHB'
 	},
 
 	req.ogMeta = { ...defaultMetaTags,
@@ -118,7 +135,8 @@ app.get('/legacy', (req, res, next)=>{
 app.get('/migrate', (req, res, next)=>{
 	req.brew = {
 		text     : migrateText,
-		renderer : 'V3'
+		renderer : 'V3',
+		theme    : '5ePHB'
 	},
 
 	req.ogMeta = { ...defaultMetaTags,
@@ -135,7 +153,8 @@ app.get('/changelog', async (req, res, next)=>{
 	req.brew = {
 		title    : 'Changelog',
 		text     : changelogText,
-		renderer : 'V3'
+		renderer : 'V3',
+		theme    : '5ePHB'
 	},
 
 	req.ogMeta = { ...defaultMetaTags,
@@ -152,7 +171,8 @@ app.get('/faq', async (req, res, next)=>{
 	req.brew = {
 		title    : 'FAQ',
 		text     : faqText,
-		renderer : 'V3'
+		renderer : 'V3',
+		theme    : '5ePHB'
 	},
 
 	req.ogMeta = { ...defaultMetaTags,
@@ -200,6 +220,26 @@ app.get('/download/:id', asyncHandler(getBrew('share')), (req, res)=>{
 	res.status(200).send(brew.text);
 });
 
+//Serve brew metadata
+app.get('/metadata/:id', asyncHandler(getBrew('share')), (req, res)=>{
+	const { brew } = req;
+	sanitizeBrew(brew, 'share');
+
+	const fields = ['title', 'pageCount', 'description', 'authors', 'lang',
+	  'published', 'views', 'shareId', 'createdAt', 'updatedAt',
+	  'lastViewed', 'thumbnail', 'tags'
+	];
+
+	const metadata = fields.reduce((acc, field)=>{
+	  if(brew[field] !== undefined) acc[field] = brew[field];
+	  return acc;
+	}, {});
+	res.status(200).json(metadata);
+});
+
+//Serve brew styling
+app.get('/css/:id', asyncHandler(getBrew('share')), (req, res)=>{getCSS(req, res);});
+
 //User Page
 app.get('/user/:username', async (req, res, next)=>{
 	const ownAccount = req.account && (req.account.username == req.params.username);
@@ -233,6 +273,8 @@ app.get('/user/:username', async (req, res, next)=>{
 		console.log(err);
 	});
 
+	brews.forEach(brew => brew.stubbed = true); //All brews from MongoDB are "stubbed"
+
 	if(ownAccount && req?.account?.googleId){
 		const auth = await GoogleActions.authCheck(req.account, res);
 		let googleBrews = await GoogleActions.listGoogleBrews(auth)
@@ -240,12 +282,12 @@ app.get('/user/:username', async (req, res, next)=>{
 				console.error(err);
 			});
 
+		// If stub matches file from Google, use Google metadata over stub metadata
 		if(googleBrews && googleBrews.length > 0) {
 			for (const brew of brews.filter((brew)=>brew.googleId)) {
 				const match = googleBrews.findIndex((b)=>b.editId === brew.editId);
 				if(match !== -1) {
 					brew.googleId = googleBrews[match].googleId;
-					brew.stubbed = true;
 					brew.pageCount = googleBrews[match].pageCount;
 					brew.renderer = googleBrews[match].renderer;
 					brew.version = googleBrews[match].version;
@@ -254,6 +296,7 @@ app.get('/user/:username', async (req, res, next)=>{
 				}
 			}
 
+			//Remaining unstubbed google brews display current user as author
 			googleBrews = googleBrews.map((brew)=>({ ...brew, authors: [req.account.username] }));
 			brews = _.concat(brews, googleBrews);
 		}
@@ -270,8 +313,10 @@ app.get('/user/:username', async (req, res, next)=>{
 });
 
 //Edit Page
-app.get('/edit/:id', asyncHandler(getBrew('edit')), (req, res, next)=>{
+app.get('/edit/:id', asyncHandler(getBrew('edit')), asyncHandler(async(req, res, next)=>{
 	req.brew = req.brew.toObject ? req.brew.toObject() : req.brew;
+
+	req.userThemes = await(getUsersBrewThemes(req.account?.username));
 
 	req.ogMeta = { ...defaultMetaTags,
 		title       : req.brew.title || 'Untitled Brew',
@@ -284,10 +329,10 @@ app.get('/edit/:id', asyncHandler(getBrew('edit')), (req, res, next)=>{
 	splitTextStyleAndMetadata(req.brew);
 	res.header('Cache-Control', 'no-cache, no-store');	//reload the latest saved brew when pressing back button, not the cached version before save.
 	return next();
-});
+}));
 
-//New Page
-app.get('/new/:id', asyncHandler(getBrew('share')), (req, res, next)=>{
+//New Page from ID
+app.get('/new/:id', asyncHandler(getBrew('share')), asyncHandler(async(req, res, next)=>{
 	sanitizeBrew(req.brew, 'share');
 	splitTextStyleAndMetadata(req.brew);
 	const brew = {
@@ -297,9 +342,11 @@ app.get('/new/:id', asyncHandler(getBrew('share')), (req, res, next)=>{
 		style    : req.brew.style,
 		renderer : req.brew.renderer,
 		theme    : req.brew.theme,
-		tags     : req.brew.tags
+		tags     : req.brew.tags,
 	};
 	req.brew = _.defaults(brew, DEFAULT_BREW);
+
+	req.userThemes = await(getUsersBrewThemes(req.account?.username));
 
 	req.ogMeta = { ...defaultMetaTags,
 		title       : 'New',
@@ -307,7 +354,19 @@ app.get('/new/:id', asyncHandler(getBrew('share')), (req, res, next)=>{
 	};
 
 	return next();
-});
+}));
+
+//New Page
+app.get('/new', asyncHandler(async(req, res, next)=>{
+	req.userThemes = await(getUsersBrewThemes(req.account?.username));
+
+	req.ogMeta = { ...defaultMetaTags,
+		title       : 'New',
+		description : 'Start crafting your homebrew on the Homebrewery!'
+	};
+
+	return next();
+}));
 
 //Share Page
 app.get('/share/:id', asyncHandler(getBrew('share')), asyncHandler(async (req, res, next)=>{
@@ -336,38 +395,30 @@ app.get('/share/:id', asyncHandler(getBrew('share')), asyncHandler(async (req, r
 	return next();
 }));
 
-//Print Page
-app.get('/print/:id', asyncHandler(getBrew('share')), (req, res, next)=>{
-	sanitizeBrew(req.brew, 'share');
-	splitTextStyleAndMetadata(req.brew);
-	next();
-});
-
 //Account Page
 app.get('/account', asyncHandler(async (req, res, next)=>{
 	const data = {};
 	data.title = 'Account Information Page';
+	
+	if(!req.account) {
+		res.set('WWW-Authenticate', 'Bearer realm="Authorization Required"');
+		const error = new Error('No valid account');
+		error.status = 401;
+		error.HBErrorCode = '50';
+		error.page = data.title;
+		return next(error);
+	};
 
 	let auth;
 	let googleCount = [];
 	if(req.account) {
 		if(req.account.googleId) {
-			try {
-				auth = await GoogleActions.authCheck(req.account, res, false);
-			} catch (e) {
-				auth = undefined;
-				console.log('Google auth check failed!');
-				console.log(e);
-			}
-			if(auth.credentials.access_token) {
-				try {
-					googleCount = await GoogleActions.listGoogleBrews(auth);
-				} catch (e) {
-					googleCount = undefined;
-					console.log('List Google files failed!');
-					console.log(e);
-				}
-			}
+			auth = await GoogleActions.authCheck(req.account, res, false)
+
+			googleCount = await GoogleActions.listGoogleBrews(auth)
+				.catch((err)=>{
+					console.error(err);
+				});
 		}
 
 		const query = { authors: req.account.username, googleId: { $exists: false } };
@@ -381,7 +432,7 @@ app.get('/account', asyncHandler(async (req, res, next)=>{
 			username    : req.account.username,
 			issued      : req.account.issued,
 			googleId    : Boolean(req.account.googleId),
-			authCheck   : Boolean(req.account.googleId && auth.credentials.access_token),
+			authCheck   : Boolean(req.account.googleId && auth?.credentials.access_token),
 			mongoCount  : mongoCount,
 			googleCount : googleCount?.length
 		};
@@ -411,17 +462,39 @@ if(isLocalEnvironment){
 	});
 }
 
+// Add Static Local Paths
+app.use('/staticImages', express.static(config.get('hb_images') && fs.existsSync(config.get('hb_images')) ? config.get('hb_images') :'staticImages'));
+app.use('/staticFonts', express.static(config.get('hb_fonts')  && fs.existsSync(config.get('hb_fonts')) ? config.get('hb_fonts'):'staticFonts'));
+
+//Vault Page
+app.get('/vault', asyncHandler(async(req, res, next)=>{
+	req.ogMeta = { ...defaultMetaTags,
+		title       : 'The Vault',
+		description : 'Search for Brews'
+	};
+	return next();
+}));
+
+//Send rendered page
+app.use(asyncHandler(async (req, res, next)=>{
+	if (!req.route) return res.redirect('/'); // Catch-all for invalid routes
+		
+	const page = await renderPage(req, res);
+	if(!page) return;
+	res.send(page);
+}));
+
 //Render the page
-const templateFn = require('./../client/template.js');
 const renderPage = async (req, res)=>{
 	// Create configuration object
 	const configuration = {
 		local       : isLocalEnvironment,
 		publicUrl   : config.get('publicUrl') ?? '',
-		environment : nodeEnv
+		environment : nodeEnv,
+		deployment  : config.get('heroku_app_name') ?? ''
 	};
 	const props = {
-		version       : require('./../package.json').version,
+		version       : version,
 		url           : req.customUrl || req.originalUrl,
 		brew          : req.brew,
 		brews         : req.brews,
@@ -430,7 +503,8 @@ const renderPage = async (req, res)=>{
 		enable_v3     : config.get('enable_v3'),
 		enable_themes : config.get('enable_themes'),
 		config        : configuration,
-		ogMeta        : req.ogMeta
+		ogMeta        : req.ogMeta,
+		userThemes    : req.userThemes
 	};
 	const title = req.brew ? req.brew.title : '';
 	const page = await templateFn('homebrew', title, props)
@@ -439,13 +513,6 @@ const renderPage = async (req, res)=>{
 		});
 	return page;
 };
-
-//Send rendered page
-app.use(asyncHandler(async (req, res, next)=>{
-	const page = await renderPage(req, res);
-	if(!page) return;
-	res.send(page);
-}));
 
 //v=====----- Error-Handling Middleware -----=====v//
 //Format Errors as plain objects so all fields will appear in the string sent
@@ -468,7 +535,7 @@ app.use(async (err, req, res, next)=>{
 	err.originalUrl = req.originalUrl;
 	console.error(err);
 
-	if(err.originalUrl?.startsWith('/api/')) {
+	if(err.originalUrl?.startsWith('/api')) {
 		// console.log('API error');
 		res.status(err.status || err.response?.status || 500).send(err);
 		return;
@@ -504,6 +571,4 @@ app.use((req, res)=>{
 });
 //^=====--------------------------------------=====^//
 
-module.exports = {
-	app : app
-};
+export default app;

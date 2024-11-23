@@ -23,14 +23,30 @@ module.exports = [
 				gen  : '\n\\page\n'
 			},
 			{
-				name : 'Page Number',
-				icon : 'fas fa-bookmark',
-				gen  : '{{pageNumber 1}}\n'
-			},
-			{
-				name : 'Auto-incrementing Page Number',
-				icon : 'fas fa-sort-numeric-down',
-				gen  : '{{pageNumber,auto}}\n'
+				name        : 'Page Numbering',
+				icon        : 'fas fa-bookmark',
+				subsnippets : [
+					{
+						name : 'Page Number',
+						icon : 'fas fa-bookmark',
+						gen  : '{{pageNumber 1}}\n'
+					},
+					{
+						name : 'Auto-incrementing Page Number',
+						icon : 'fas fa-sort-numeric-down',
+						gen  : '{{pageNumber,auto}}\n'
+					},
+					{
+						name : 'Skip Page Number Increment this Page',
+						icon : 'fas fa-xmark',
+						gen  : '{{skipCounting}}\n'
+					},
+					{
+						name : 'Restart Numbering',
+						icon : 'fas fa-arrow-rotate-left',
+						gen  : '{{resetCounting}}\n'
+					},
+				]
 			},
 			{
 				name        : 'Footer',
@@ -152,6 +168,18 @@ module.exports = [
 				icon : 'fas fa-image',
 				gen  : dedent`
 					![cat warrior](https://s-media-cache-ak0.pinimg.com/736x/4a/81/79/4a8179462cfdf39054a418efd4cb743e.jpg) {width:325px,mix-blend-mode:multiply}`
+			},
+			{
+				name : 'Image Wrap Left',
+				icon : 'fac image-wrap-left',
+				gen  : dedent`
+					![homebrewery_mug](http://i.imgur.com/hMna6G0.png) {width:280px,margin-right:-3cm,wrapLeft}`
+			},
+			{
+				name : 'Image Wrap Right',
+				icon : 'fac image-wrap-right',
+				gen  : dedent`
+					![homebrewery_mug](http://i.imgur.com/hMna6G0.png) {width:280px,margin-left:-3cm,wrapRight}`
 			},
 			{
 				name : 'Background Image',
@@ -307,8 +335,8 @@ module.exports = [
 	/**************** FONTS *************/
 	{
 		groupName : 'Fonts',
-		icon	  : 'fas fa-keyboard',
-		view	  : 'text',
+		icon   	  : 'fas fa-keyboard',
+		view   	  : 'text',
 		snippets  : [
 			{
 				name : 'Open Sans',
@@ -341,64 +369,69 @@ module.exports = [
 				gen	 : dedent`{{font-family:MrEavesRemake Dummy Text}}`
 			},
 			{
-				name: 'Solbera Imitation',
-				icon: 'font SolberaImitationRemake',
-				gen: dedent`{{font-family:SolberaImitationRemake Dummy Text}}`
+				name : 'Pagella',
+				icon : 'font Pagella',
+				gen	 : dedent`{{font-family:Pagella Dummy Text}}`
+			},
+			{
+				name : 'Solbera Imitation',
+				icon : 'font SolberaImitationRemake',
+				gen  : dedent`{{font-family:SolberaImitationRemake Dummy Text}}`
 			  },
 			  {
-				name: 'Scaly Sans Small Caps',
-				icon: 'font ScalySansSmallCapsRemake',
-				gen: dedent`{{font-family:ScalySansSmallCapsRemake Dummy Text}}`
+				name : 'Scaly Sans Small Caps',
+				icon : 'font ScalySansSmallCapsRemake',
+				gen  : dedent`{{font-family:ScalySansSmallCapsRemake Dummy Text}}`
 			  },
 			  {
-				name: 'Walter Turncoat',
-				icon: 'font WalterTurncoat',
-				gen: dedent`{{font-family:WalterTurncoat Dummy Text}}`
+				name : 'Walter Turncoat',
+				icon : 'font WalterTurncoat',
+				gen  : dedent`{{font-family:WalterTurncoat Dummy Text}}`
 			  },
 			  {
-				name: 'Lato',
-				icon: 'font Lato',
-				gen: dedent`{{font-family:Lato Dummy Text}}`
+				name : 'Lato',
+				icon : 'font Lato',
+				gen  : dedent`{{font-family:Lato Dummy Text}}`
 			  },
 			  {
-				name: 'Courier',
-				icon: 'font Courier',
-				gen: dedent`{{font-family:Courier Dummy Text}}`
+				name : 'Courier',
+				icon : 'font Courier',
+				gen  : dedent`{{font-family:Courier Dummy Text}}`
 			  },
 			  {
-				name: 'Nodesto Caps Condensed',
-				icon: 'font NodestoCapsCondensed',
-				gen: dedent`{{font-family:NodestoCapsCondensed Dummy Text}}`
+				name : 'Nodesto Caps Condensed',
+				icon : 'font NodestoCapsCondensed',
+				gen  : dedent`{{font-family:NodestoCapsCondensed Dummy Text}}`
 			  },
 			  {
-				name: 'Overpass',
-				icon: 'font Overpass',
-				gen: dedent`{{font-family:Overpass Dummy Text}}`
+				name : 'Overpass',
+				icon : 'font Overpass',
+				gen  : dedent`{{font-family:Overpass Dummy Text}}`
 			  },
 			  {
-				name: 'Davek',
-				icon: 'font Davek',
-				gen: dedent`{{font-family:Davek Dummy Text}}`
+				name : 'Davek',
+				icon : 'font Davek',
+				gen  : dedent`{{font-family:Davek Dummy Text}}`
 			  },
 			  {
-				name: 'Iokharic',
-				icon: 'font Iokharic',
-				gen: dedent`{{font-family:Iokharic Dummy Text}}`
+				name : 'Iokharic',
+				icon : 'font Iokharic',
+				gen  : dedent`{{font-family:Iokharic Dummy Text}}`
 			  },
 			  {
-				name: 'Rellanic',
-				icon: 'font Rellanic',
-				gen: dedent`{{font-family:Rellanic Dummy Text}}`
+				name : 'Rellanic',
+				icon : 'font Rellanic',
+				gen  : dedent`{{font-family:Rellanic Dummy Text}}`
 			  },
 			  {
-				name: 'Times New Roman',
-				icon: 'font TimesNewRoman',
-				gen: dedent`{{font-family:"Times New Roman" Dummy Text}}`
+				name : 'Times New Roman',
+				icon : 'font TimesNewRoman',
+				gen  : dedent`{{font-family:"Times New Roman" Dummy Text}}`
 			  }
 		]
 	},
 
-	/**************** PAGE *************/
+	/**************** LAYOUT *************/
 
 	{
 		groupName : 'Print',
@@ -406,13 +439,31 @@ module.exports = [
 		view      : 'style',
 		snippets  : [
 			{
+				name : 'A3 Page Size',
+				icon : 'far fa-file',
+				gen  : dedent`/* A3 Page Size */
+					.page {
+						width  : 297mm;
+						height : 420mm;
+					}\n\n`,
+			},
+			{
 				name : 'A4 Page Size',
 				icon : 'far fa-file',
 				gen  : dedent`/* A4 Page Size */
-					.page{
+					.page {
 						width  : 210mm;
 						height : 296.8mm;
 					}\n\n`
+			},
+			{
+				name : 'A5 Page Size',
+				icon : 'far fa-file',
+				gen  : dedent`/* A5 Page Size */
+					.page {
+						width  : 148mm;
+						height : 210mm;
+				}\n\n`,
 			},
 			{
 				name : 'Square Page Size',
@@ -423,6 +474,17 @@ module.exports = [
 						height  : 125mm;
 						padding : 12.5mm;
 						columns : unset;
+					}\n\n`
+			},
+			{
+				name : 'Card Page Size',
+				icon : 'far fa-file',
+				gen  : dedent`/* Card Size */
+					.page {
+						width     : 63.5mm;
+						height    : 88.9mm;
+						padding	  : 5mm;
+						columns	  : unset;
 					}\n\n`
 			},
 			{
@@ -440,5 +502,5 @@ module.exports = [
 					}\n\n`
 			},
 		]
-	}
+	},
 ];
